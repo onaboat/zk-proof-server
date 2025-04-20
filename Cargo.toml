@@ -1,15 +1,19 @@
 [package]
-name = "zk-proof-server"
+name = "zk-server"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 axum = "0.7"
-tokio = { version = "1.32", features = ["full"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 bs58 = "0.5"
-zeroize = "=1.7.0"  # Pin the exact version
-
-spl-token-2022 = "1.0.0"
+bytemuck = "1.14"
+solana-zk-sdk = "2.2.1"
+solana-sdk = "2.2.1"
+anyhow = "1"
+spl-token-2022 = "7.0.0"
+spl-associated-token-account = {version = "6.0.0", features = ["no-entrypoint"]}
+spl-token-confidential-transfer-proof-extraction = "0.2.1"
 spl-token-confidential-transfer-proof-generation = "0.3.0"
