@@ -14,4 +14,4 @@ spl-token-2022 = "1.0.0"
 spl-token-confidential-transfer-proof-generation = "0.3.0"
 
 [patch.crates-io]
-zeroize = "1.7.0"  # Force a version that satisfies both constraints
+zeroize = "=1.7.0"  # Use exact version with = sign
