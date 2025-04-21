@@ -9,11 +9,16 @@ tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 bs58 = "0.5"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt"] }
 bytemuck = "1.14"
 solana-zk-sdk = "2.2.1"
 solana-sdk = "2.2.1"
 anyhow = "1"
 spl-token-2022 = "7.0.0"
+solana-client = "2.2.1"
 spl-associated-token-account = {version = "6.0.0", features = ["no-entrypoint"]}
 spl-token-confidential-transfer-proof-extraction = "0.2.1"
 spl-token-confidential-transfer-proof-generation = "0.3.0"
+bincode = "2.0.1"
+base64 = "0.22.1"
