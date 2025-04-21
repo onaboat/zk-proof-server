@@ -24,6 +24,7 @@ use spl_associated_token_account::instruction::create_associated_token_account_i
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token_confidential_transfer_proof_extraction::instruction::{ProofData, ProofLocation};
 use base64::{prelude::BASE64_STANDARD, Engine};
+use bincode;
 
 #[derive(Deserialize)]
 struct GenerateKeysRequest {
@@ -204,6 +205,47 @@ async fn balance(State(state): State<Arc<AppState>>, Json(payload): Json<Balance
     })
 }
 
+async fn initialize(State(_state): State<Arc<AppState>>, Json(payload): Json<InitializeRequest>) -> Json<InitializeResponse> {
+    let authority = Pubkey::from_str(&payload.authority).unwrap();
+    let token_mint = Pubkey::from_str(&payload.token_mint).unwrap();
+    let user_ata = get_associated_token_address_with_program_id(&authority, &token_mint, &token_2022_id());
+
+    let elgamal = ElGamalKeypair::new_from_signature(&Signature::from_str(&payload.elgamal_signature).unwrap()).unwrap();
+    let aes = AeKey::new_from_signature(&Signature::from_str(&payload.aes_signature).unwrap()).unwrap();
+
+    let proof_data = PubkeyValidityProofData::new(&elgamal).unwrap();
+    let mut configure_ixs = configure_account(
+        &token_2022_id(),
+        &user_ata,
+        &token_mint,
+        &aes.encrypt(0).into(),
+        65536,
+        &authority,
+        &[],
+        ProofLocation::InstructionOffset(1.try_into().unwrap(), ProofData::InstructionData(&proof_data)),
+    ).unwrap();
+
+    let mut instructions = vec![
+        create_associated_token_account_idempotent(&authority, &authority, &token_mint, &token_2022_id()),
+        reallocate(
+            &token_2022_id(),
+            &user_ata,
+            &authority,
+            &authority,
+            &[],
+            &[ExtensionType::ConfidentialTransferAccount],
+        ).unwrap(),
+    ];
+
+    instructions.append(&mut configure_ixs);
+
+    let tx = Transaction::new_with_payer(&instructions, Some(&authority));
+    let serialized_tx = bincode::serialize(&tx).unwrap();
+
+    Json(InitializeResponse {
+        transaction: BASE64_STANDARD.encode(serialized_tx),
+    })
+}
 
 #[tokio::main]
 async fn main() {
@@ -217,6 +259,7 @@ async fn router_api(rpc: Arc<RpcClient>) {
     let app = Router::new()
         .route("/generate-keys", post(generate_keys))
         .route("/proof/balances", post(balance))
+        .route("/initialize", post(initialize))
         .with_state(Arc::new(AppState { rpc }));
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
